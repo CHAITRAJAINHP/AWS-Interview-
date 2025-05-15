@@ -145,3 +145,102 @@ Issue	Check
 No traffic to EC2	Instance not in target group or marked unhealthy
 HTTPS not working	ACM cert attached? Listener on port 443?
 Sticky sessions fail	Cookies disabled in app or misconfigured
+
+
+
+
+Target Groups — 💡 "Who should the ELB send traffic to?"
+✅ What is a Target Group?
+A Target Group is a collection of targets (like EC2 instances, IP addresses, Lambda functions, or containers) that the ELB can forward requests to.
+
+🔧 Each target group is linked to:
+A protocol (HTTP, HTTPS, TCP)
+
+A port (e.g., 80, 443)
+
+A health check path (e.g., /health)
+
+📦 Real Example:
+You launch 3 EC2 instances to run a Node.js app.
+
+You create a Target Group called web-app-tg and register those 3 instances in it.
+
+Then, you attach that Target Group to an ALB Listener Rule (like for /api).
+
+➡️ So when users access your app, the ELB sends traffic only to healthy instances in the target group.
+
+🔥 Why Target Groups?
+Flexibility: You can send /api to one group and /admin to another.
+
+Health Checks are run per target group.
+
+Supports blue/green deployments (switch groups without changing ELB).
+
+2️⃣ Sticky Sessions — 🍪 "Keep me talking to the same server"
+✅ What is a Sticky Session?
+A sticky session (a.k.a. session affinity) ensures that once a user connects to a backend, they keep connecting to the same target for the duration of their session.
+
+This is done using cookies.
+
+🔧 How it works:
+When a user connects:
+
+ELB sends them to EC2 instance A
+
+A special cookie (AWSALB) is stored in their browser
+
+Future requests go to instance A (as long as the cookie is valid)
+
+📦 Real Example:
+You have a shopping cart web app.
+
+Without sticky sessions: User adds items → request goes to different servers → session may be lost.
+
+With sticky sessions: User always hits the same server, so their cart stays intact.
+
+🛠️ How to Enable:
+In Target Group settings, enable:
+
+“Stickiness: Enabled”
+
+Choose “Duration” (like 5 minutes)
+
+⚠️ Interview Tip:
+Q: What’s the downside of sticky sessions?
+
+A: If the target fails, the session may break. Also, it can cause uneven traffic if some users stay connected longer.
+
+3️⃣ SNI (Server Name Indication) — 🔒 Multiple SSLs on one ALB
+✅ What is SNI?
+SNI stands for Server Name Indication. It’s a TLS/SSL extension that allows one Load Balancer (or server) to use multiple SSL certificates for different domain names on the same listener.
+
+📦 Real Example:
+You host:
+
+app.example.com
+
+admin.example.com
+
+Both use HTTPS and are served by the same ALB.
+
+Using SNI, ALB can serve different certificates:
+
+app.example.com → Cert A
+
+admin.example.com → Cert B
+
+All on port 443, same listener!
+
+🔐 Without SNI?
+Without SNI, you’re limited to one SSL certificate per listener → hard to host multiple HTTPS sites.
+
+💬 Interview Tip:
+Q: Why is SNI important in ALB?
+
+A: Because ALB supports hosting multiple domains with HTTPS on a single listener, saving cost and complexity.
+
+🔁 Summary Table
+Term	Simple Meaning	Real Use
+Target Group	Group of backend services	Tells ELB where to send traffic
+Sticky Session	Keep user with same server	Needed for stateful apps (e.g., shopping cart)
+SNI	Multiple SSL certs on same listener	Host multiple HTTPS domains on one ALB
