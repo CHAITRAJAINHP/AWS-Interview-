@@ -1,0 +1,132 @@
+✅ 1. Overview of AWS IAM
+AWS IAM is a service that helps you securely control access to AWS services and resources. You can create and manage users, groups, roles, and policies to allow or deny access to AWS resources.
+
+Key Concepts:
+
+IAM Users – End users with credentials to access AWS.
+
+IAM Groups – Collection of users with the same permissions.
+
+IAM Roles – Assigned to AWS services or external users to assume specific permissions temporarily.
+
+IAM Policies – JSON documents that define permissions.
+
+Identity Providers – Integrate with SSO or external authentication providers like Google, AD, etc.
+
+MFA – Adds another layer of security.
+
+💡 2. Real-Time Use Cases
+Use Case	Description
+1. Grant EC2 read-only access to S3	Attach an IAM role to EC2 with a read-only S3 policy.
+2. Use IAM for CI/CD Pipelines	Create IAM users/roles for Jenkins or GitHub Actions to deploy resources.
+3. Cross-Account Access	IAM roles are used to give access between AWS accounts.
+4. Fine-Grained Permissions	Use policy conditions to allow access only from a specific IP range or time.
+5. Temporary Access via STS	IAM role is assumed temporarily using AWS STS for federated users.
+
+🎯 3. Common Interview Questions & Answers
+🔹 Q1: What is AWS IAM and why is it used?
+Answer:
+AWS IAM is a web service that allows you to securely manage users, groups, roles, and their access to AWS resources. It helps you enforce the principle of least privilege by giving users only the permissions they need.
+
+🔹 Q2: What's the difference between an IAM user and an IAM role?
+Answer:
+
+IAM User: Permanent credentials (username/password, access keys), tied to a person or application.
+
+IAM Role: Temporary credentials (via STS), used by services (EC2, Lambda), cross-account access, or federated users.
+
+🔹 Q3: What is a policy and what are its types in IAM?
+Answer:
+A policy is a JSON document that defines permissions. There are:
+
+Managed policies (AWS or Customer)
+
+Inline policies (attached directly to a single entity)
+
+Resource-based policies (e.g., S3 bucket policy)
+
+🔹 Q4: How would you give temporary access to a third-party vendor?
+Answer:
+
+Create an IAM Role
+
+Enable STS (Security Token Service)
+
+Define a trust relationship
+
+Share the assume-role ARN
+
+Vendor assumes the role using their credentials
+
+🔹 Q5: What’s the principle of least privilege and how do you implement it in IAM?
+Answer:
+It means giving users the minimum level of access necessary to perform their tasks. Implemented by:
+
+Attaching narrow-scoped policies
+
+Using conditions in policies
+
+Regularly auditing with IAM Access Analyzer
+
+🔥 4. Advanced/Real-Time Scenario-Based Questions
+🔸 Q6: You want to allow EC2 instances to upload logs to an S3 bucket. How do you configure this?
+Answer:
+
+Create an IAM Role with a policy that allows s3:PutObject to the bucket.
+
+Attach the IAM Role to the EC2 instance.
+
+Ensure the S3 bucket policy allows access from the role if needed.
+
+json
+Copy
+Edit
+{
+  "Effect": "Allow",
+  "Action": "s3:PutObject",
+  "Resource": "arn:aws:s3:::my-logs-bucket/*"
+}
+🔸 Q7: You’re seeing AccessDenied for a Lambda function trying to read a DynamoDB table. How would you troubleshoot?
+Answer:
+
+Check if the Lambda has an IAM role attached.
+
+Verify the role's inline or managed policy has dynamodb:GetItem access.
+
+Check if the DynamoDB table has a resource-based policy (if used).
+
+Use CloudTrail to verify the permission error source.
+
+🔸 Q8: How do you restrict access to a specific S3 bucket for a user group?
+Answer:
+Attach a policy to the group like:
+
+json
+Copy
+Edit
+{
+  "Effect": "Allow",
+  "Action": ["s3:GetObject"],
+  "Resource": "arn:aws:s3:::my-bucket/*"
+}
+You can also use conditions for IP-based or MFA-based access.
+
+🔸 Q9: How do you allow a Lambda function in Account A to access S3 in Account B?
+Answer:
+
+Create an IAM role in Account B with S3 permissions.
+
+Add a trust policy to allow Account A's Lambda to assume this role.
+
+In Lambda (Account A), use sts:AssumeRole to assume the role in Account B.
+
+🔸 Q10: What tools help with IAM security?
+Answer:
+
+IAM Access Analyzer – Detects unused roles, excessive permissions.
+
+AWS Config – Tracks IAM changes over time.
+
+CloudTrail – Logs access events.
+
+Credential Reports – Identify old/unused keys, no MFA, etc.
