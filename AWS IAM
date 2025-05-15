@@ -130,3 +130,139 @@ AWS Config – Tracks IAM changes over time.
 CloudTrail – Logs access events.
 
 Credential Reports – Identify old/unused keys, no MFA, etc.
+
+
+
+
+Q9 Simplified:
+❓ How do you allow a Lambda function in Account A to access an S3 bucket in Account B?
+
+🎯 Simple Answer:
+Create an IAM Role in Account B with permissions to access the S3 bucket.
+
+Allow Account A to “assume” that role — this is done using a Trust Policy.
+
+In Lambda in Account A, configure it to assume the role from Account B using STS (Security Token Service).
+
+🔑 Why do we need this?
+Because Account A and Account B are separate AWS accounts.
+So the Lambda in A doesn't have permissions in B by default.
+We allow it securely using a role assumption mechanism.
+
+🧠 Understanding Key Concepts
+🔸 1. What is a Trust Policy?
+A Trust Policy defines who is allowed to assume a role.
+
+Example:
+In Account B, you create a role with a Trust Policy like this:
+
+json
+Copy
+Edit
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::ACCOUNT_A_ID:root"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+This says:
+
+"I trust Account A to assume this role."
+
+You can also restrict it further to only a Lambda service or specific role ARN.
+
+🔸 2. What is STS (Security Token Service)?
+STS allows temporary access to AWS resources by assuming roles.
+
+✅ Example:
+
+Lambda in Account A assumes a role from Account B via STS.
+
+STS returns temporary credentials.
+
+Lambda uses those credentials to access the S3 bucket.
+
+🚀 Step-by-Step Real-Time Example
+🏁 Goal:
+Lambda in Account A → access s3:GetObject from a bucket in Account B.
+
+📍 Step 1: In Account B
+✅ Create an IAM Role (S3AccessRole) with:
+Trust Policy:
+
+json
+Copy
+Edit
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::ACCOUNT_A_ID:root"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+Permissions Policy:
+
+json
+Copy
+Edit
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject"],
+      "Resource": "arn:aws:s3:::my-bucket/*"
+    }
+  ]
+}
+📍 Step 2: In Account A
+In Lambda function code (Python example):
+
+python
+Copy
+Edit
+import boto3
+
+# Assume role in Account B
+sts_client = boto3.client('sts')
+
+assumed_role = sts_client.assume_role(
+    RoleArn="arn:aws:iam::ACCOUNT_B_ID:role/S3AccessRole",
+    RoleSessionName="LambdaSession"
+)
+
+credentials = assumed_role['Credentials']
+
+# Use the temporary credentials to access S3 in Account B
+s3_client = boto3.client(
+    's3',
+    aws_access_key_id=credentials['AccessKeyId'],
+    aws_secret_access_key=credentials['SecretAccessKey'],
+    aws_session_token=credentials['SessionToken']
+)
+
+# Now access the bucket
+response = s3_client.get_object(
+    Bucket='my-bucket',
+    Key='somefile.txt'
+)
+
+data = response['Body'].read()
+print(data)
+🧩 Summary Table
+Concept	Purpose
+IAM Role	Grants permissions to access resources
+Trust Policy	Says who is allowed to assume the role
+STS	Used to assume role and get temporary credentials
+Cross-account Access	Done using Role + Trust Policy + STS
